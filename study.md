@@ -3,6 +3,266 @@
 <hr>
 
 
+## 寻找数组的中心索引
+
+给你一个整数数组 nums ，请计算数组的 中心下标 。
+
+数组 中心下标 是数组的一个下标，其左侧所有元素相加的和等于右侧所有元素相加的和。
+
+如果中心下标位于数组最左端，那么左侧数之和视为 0 ，因为在下标的左侧不存在元素。这一点对于中心下标位于数组最右端同样适用。
+
+如果数组有多个中心下标，应该返回 最靠近左边 的那一个。如果数组不存在中心下标，返回 -1 。
+
+```java
+题解：利用 右后缀和  = 总和 - 左前缀和（sum）- 中心值
+其中左前缀和 = 右后缀和 => 所以 两倍左前缀和 = 总和
+class Solution {
+    public int pivotIndex(int[] nums) {
+         int total = Arrays.stream(nums).sum();//总和
+        int sum = 0;
+        for (int i = 0; i < nums.length; i++) {
+            if (2*sum + nums[i] == total ){
+                return i;
+            }
+            sum+=nums[i];
+        }
+        return -1;
+    }
+}
+```
+
+---
+
+## 搜索插入位置
+
+给定一个排序数组和一个目标值，在数组中找到目标值，并返回其索引。如果目标值不存在于数组中，返回它将会被按顺序插入的位置。（数组升序，且无重复元素）
+
+请必须使用时间复杂度为 O(log n) 的算法。
+
+```java
+二分查找
+class Solution {
+    public int searchInsert(int[] nums, int target) {
+        int left = 0, right = nums.length - 1;
+        while(left <= right) {
+            int mid = (left + right) / 2;
+            if(nums[mid] == target) {
+                return mid;
+            } else if(nums[mid] < target) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+        return left;
+    }
+}
+```
+
+---
+
+## 合并区间
+
+以数组 intervals 表示若干个区间的集合，其中单个区间为 intervals[i] = [starti, endi] 。请你合并所有重叠的区间，并返回 一个不重叠的区间数组，该数组需恰好覆盖输入中的所有区间 。
+
+```java
+class Solution {
+     public int[][] merge(int[][] intervals) {//合并区间
+    Arrays.sort(intervals, new Comparator<int[]>() { //左前缀排序
+            @Override
+            public int compare(int[] o1, int[] o2) {
+                return o1[0] - o2[0];
+            }
+        });
+        //合并,使用动态数组添加
+        ArrayList<int[]> outputs = new ArrayList<>();
+        for (int i = 0; i < intervals.length; i++) {
+            int currentInterval[] = intervals[i];//当前数组区间
+            if (outputs.isEmpty()) {//第一次添加，直接添加
+                outputs.add(currentInterval);
+            } else {//非第一次添加，进行区间重叠判断
+                int currentLight = currentInterval[0] ;//当前个区间 左
+                int beforeRight = outputs.get(outputs.size()-1)[1];//前一个区间右
+                if (beforeRight >= currentLight) {//需要合并
+                    int currentRight = currentInterval[1];//当前区间 右
+                    if (beforeRight < currentRight) {
+                        currentInterval[0] = outputs.get(outputs.size()-1)[0];
+                        currentInterval[1] = currentRight;
+                        outputs.set(outputs.size()-1,currentInterval);
+                    }
+                } else {//不需要合并
+                    outputs.add(currentInterval);
+                }
+            }
+        }
+        return outputs.toArray(new int[outputs.size()][]);
+}
+}
+```
+
+---
+
+## 旋转矩阵
+给你一幅由 N × N 矩阵表示的图像，其中每个像素的大小为 4 字节。请你设计一种算法，将图像旋转 90 度。
+
+不占用额外内存空间能否做到？
+```java
+原地修改：水平翻转 (i,j)=>(n-i-1,j) 然后 对角线翻转：（i,j）=> (j,i)
+class Solution {
+        public void rotate(int[][] matrix) {//旋转90度
+            int arr [][] = new int[matrix.length][matrix.length];
+            for(int i = 0;i<matrix.length; i++){//遍历数组
+                int len = matrix.length-(i+1);
+                for(int j = 0; j<matrix[i].length;j++){
+                    arr[j][i] = matrix[len][j];
+                }
+            }
+           for(int i = 0;i<matrix.length;i++){
+               for(int j = 0;j<matrix[i].length;j++){
+                   matrix[i][j] = arr[i][j];
+               }
+           }
+        }
+    }
+```
+
+---
+
+## 零矩阵
+
+编写一种算法，若M × N矩阵中某个元素为0，则将其所在的行与列清零。
+```java
+class Solution {
+       public void setZeroes(int[][] matrix) {
+        int m = matrix.length, n = matrix[0].length;
+        boolean[] row = new boolean[m];
+        boolean[] col = new boolean[n];
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (matrix[i][j] == 0) {
+                    row[i] = col[j] = true;
+                }
+            }
+        }
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                if (row[i] || col[j]) {
+                    matrix[i][j] = 0;
+                }
+            }
+        }
+    }
+}
+```
+
+
+---
+
+## 对角线遍历
+
+给你一个大小为 `m x n` 的矩阵 `mat` ，请以对角线遍历的顺序，用一个数组返回这个矩阵中的所有元素。
+
+
+![[Pasted image 20230313211958.png]]
+
+
+
+
+```java
+class Solution {
+    public int[] findDiagonalOrder(int[][] mat) {
+        int m = mat.length;//行
+        int n = mat[0].length;//列
+        int res [] = new int[m*n];//用于接收数据
+        int pos = 0;
+        for (int i = 0; i < m+n-1; i++) {//遍历对角线,i是对角线编号，从零开始
+            if (i%2==1){//i为偶数
+                int x = i<n? 0 : i-n+1;
+                int y = i<n? i : n-1;
+                while (x<m&&y>=0){
+                    res[pos] = mat[x][y];
+                    pos++;
+                    x++;
+                    y--;
+                }
+            }else {//i为奇数
+                int x = i<m? i : m-1;
+                int y = i<m? 0 : i-m+1;
+                while (x>=0&&y<n){
+                    res[pos] = mat[x][y];
+                    pos++;
+                    x--;
+                    y++;
+                }
+            }
+        }
+        return res ;
+    }
+}
+```
+
+
+---
+
+## 最长公共前缀
+
+编写一个函数来查找字符串数组中的最长公共前缀。
+
+如果不存在公共前缀，返回空字符串 `""`。
+
+```java
+//整体思路，每一次以长度小的字符串来作为比较次数。因为要找公共前缀，其中字符串是一个重要的影响因素
+class Solution {
+  public String longestCommonPrefix(String[] strs) {
+            if (strs.length==0||strs == null)return "";
+            String target = strs[0];//第一个字符串
+            for(int i =1;i<strs.length;i++){
+                target = longestCommonPrefix(target,strs[i]);
+                if (target.length() == 0)break;
+            }
+            return target;
+        }
+        public String longestCommonPrefix(String target , String target1) {
+            int index = 0;
+            int min = Math.min(target.length(), target1.length());//两个字符串的最小长度，用于后面的比较长度
+            while (index < min&&target.charAt(index) == target1.charAt(index)) {//连续比较每一个字符
+                    index++;
+                }
+            return target.substring(0,index);
+        }
+}
+```
+
+---
+
+## 最长回文子串
+
+给你一个字符串 `s`，找到 `s` 中最长的回文子串。
+
+如果字符串的反序与原始字符串相同，则该字符串称为回文字符串。
+
+```java
+class Solution {
+    public String longestPalindrome(String s) {//中心扩展算法
+        if (s == null && s.length() < 1) return "";
+            int start = 0;
+            int maxLen =1;
+            for (int i = 0; i < s.length()-1; i++) {// i 作为中心点
+               if(i-1>=0&&i+1<s.length()&&s.charAt(i-1) == s.charAt(i+1)){
+                   int a =i-1;
+                   int b = i+1;
+                   while ((--a) >=0&& (++b)< s.length()&&s.charAt(a) == s.charAt(b)) {
+                       start = a;
+                       maxLen = b;
+                   }
+               }
+            }
+        return s.substring(start,maxLen+1);
+    }
+}
+```
+
+
 **题目**：
 
 主串A：a、b、c、d
@@ -10,6 +270,8 @@
 子串B：b、c
 
 判断B是否存在于A中，存在返回A下标，不存在放回-1
+
+---
 
 ## BF暴力算法
 
@@ -408,4 +670,196 @@ int[] row = new int[numRows];//用一行数组作为下一行的参考[1*numRows
 首先初始化一个长度为 numRows 的数组 row，用于存储每一行的结果。将数组中的所有元素初始化为1，这是因为每一行的首尾元素都为1。然后，遍历每一行，逐个计算每个元素的值，并添加到当前行的列表中。计算每个元素的值时，需要使用前一行的结果数组。在计算完每一行后，需要更新结果数组，将其更新为当前行的结果数组，以便下一行计算时使用。
 
 这种优化方法可以将空间复杂度从 O(n^2) 降低到 O(n)，因此在 numRows 很大时，可以显著减少内存消耗。
+```
+
+题目：
+给定一个非负索引 `rowIndex`，返回「杨辉三角」的第 `rowIndex` 行。（0作为第一行）
+
+在「杨辉三角」中，每个数是它左上方和右上方的数的和。
+
+```java
+class Solution {
+    public List<Integer> getRow(int rowIndex) {
+        //初始化最终数组
+        List<Integer> arrlist = new ArrayList();
+        if(rowIndex < 0)return arrlist;
+        int [] a = new int[rowIndex+1];
+        //初始化结果数组,用一维数组作为参考数组,以层数作为长度
+        for(int i = 0;i<a.length;i++){
+            a[i] = 1;
+        }
+        //不停迭代结果数组，直到我们想要的那一层
+        for(int i = 0;i<rowIndex;i++){//外层循环次数为层数，i=0 为第一层
+            //更新结果数组
+            for(int j = i; j>0;j--){
+                a[j] = a[j] + a[j-1];
+            }
+        }
+        //赋值并返回最终数组
+        for(int j = 0;j<a.length;j++){
+                arrlist.add(a[j]);
+        }
+        return arrlist;
+    }
+}
+```
+
+
+## 反转字符串中的单词 III
+
+给定一个字符串 `s` ，你需要反转字符串中每个单词的字符顺序，同时仍保留空格和单词的初始顺序。
+
+```java
+双指针解法、空间复杂度o(n),时间复杂度O(n2)
+class Solution {  
+    public String reverseWords(String s) {  
+        //转化成字符数组  
+        char []s2 = (s+" ").toCharArray();  
+        for (int i = 0; i < s2.length; i++) {  
+            //循环找空格  
+            int right = 0;//作为右指针  
+            for (int j = i; j < s2.length; j++) {  
+                if (s2[j] == ' '){  
+                    right = j;  
+                    break;  
+                }  
+            }  
+            //双指针交换位置  
+            char temp = 0;  
+            int r = right;//记录空格的位置  
+            for (int j = i; j < right; j++,right--) {  
+                temp = s2[j];  
+                s2[j] = s2[right-1];  
+                s2[right-1] = temp;  
+            }  
+            i =r;//下一个循环i会自增1，相当于记录了第一次找到的空格的下一个位置（作为左指针）  
+        }  
+        return String.valueOf(s2).trim();  
+    }  
+}
+```
+
+
+```java
+解法二、API调用
+class Solution {
+    public String reverseWords(String s) {
+        String[] s1 = s.split("\\s+");//以空格分割字符串   
+        for (int i = 0; i < s1.length; i++) {
+            s1[i] = reverse(s1[i]);
+        }
+        return String.join(" ",s1);
+    }
+    private String reverse(String s1) {
+        StringBuilder sb = new StringBuilder(s1);
+        return sb.reverse().toString();//反转每一个字符串
+    }
+}
+```
+
+
+## 寻找旋转排序数组中的最小值
+
+已知一个长度为 n 的数组，预先按照升序排列，经由 1 到 n 次 旋转 后，得到输入数组。例如，原数组 nums = [0,1,2,4,5,6,7] 在变化后可能得到：
+若旋转 4 次，则可以得到 [4,5,6,7,0,1,2]
+若旋转 7 次，则可以得到 [0,1,2,4,5,6,7]
+注意，数组 [a[0], a[1], a[2], ..., a[n-1]] 旋转一次 的结果为数组 [a[n-1], a[0], a[1], a[2], ..., a[n-2]] 。
+
+给你一个元素值 互不相同 的数组 nums ，它原来是一个升序排列的数组，并按上述情形进行了多次旋转。请你找出并返回数组中的 最小元素 。
+
+你必须设计一个时间复杂度为 O(log n) 的算法解决此问题。
+
+分析：其中--怎样旋转的？
+
+![[屏幕截图 2023-03-11 212355.png]]
+
+```java
+二分法
+class Solution {
+    public int findMin(int[] nums) {
+        int left = 0;
+        int right = nums.length -1;
+        while(left<right){
+            int mid = left + (right - left )/2;//每次左边值更新
+            if(nums[mid]>nums[right]){//如果中间值大于右边值，则最小值一定在右边
+                left = mid+1;
+            }
+            else if(nums[mid]<nums[right]){//否则最小值在左边
+                right =mid;
+            }
+            else right--;//左边的与中间值相等，缩短右指针(因为最小值不可能在最右边)
+        }
+        return nums[left];
+    }
+}
+```
+
+
+## 删除排序数组中的重复项
+
+给你一个 升序排列 的数组 nums ，请你 原地 删除重复出现的元素，使每个元素 只出现一次 ，返回删除后数组的新长度。元素的 相对顺序 应该保持 一致 。
+
+由于在某些语言中不能改变数组的长度，所以必须将结果放在数组nums的第一部分。更规范地说，如果在删除重复项之后有 k 个元素，那么 nums 的前 k 个元素应该保存最终结果。
+
+将最终结果插入 nums 的前 k 个位置后返回 k 。
+
+不要使用额外的空间，你必须在 原地 修改输入数组 并在使用 O(1) 额外空间的条件下完成。
+
+```java
+class Solution {
+    //快慢指针思想，快指针将不同与满指针的元素放到慢指针的下一位
+    public int removeDuplicates(int[] nums) {
+        if(nums == null||nums.length == 0)return 0;
+         // 定义慢指针和快指针，慢指针指向不同元素的最后一个位置，快指针用于遍历数组
+        int slow =0;
+        for(int fast =1;fast<nums.length;fast++){
+            if(nums[slow] != nums[fast]){//右指针元素和左指针不同，则将右指针的元素放到左指针的下一个位置
+                slow++;
+                nums[slow] = nums[fast];
+            }
+        }
+        return slow+1;
+    }
+}
+```
+
+思路：上述代码段是一种时间复杂度为 O(n) 的最优解。算法的基本思想是维护一个慢指针和一个快指针，当快指针指向的元素不同时，将其放到慢指针的下一个位置，并更新慢指针位置。由于数组已排序，因此相同元素必定相邻，只需要遍历一次即可删除重复元素。时间复杂度为 O(n)，空间复杂度为 O(1)。
+
+
+## 移动零
+给定一个数组 nums，编写一个函数将所有 0 移动到数组的末尾，同时保持非零元素的相对顺序。
+
+请注意 ，必须在不复制数组的情况下原地对数组进行操作。
+
+```java
+class Solution {
+public void moveZeroes(int[] nums) {
+思路：快指针遍历寻找非零元素，将非零元素放在前面。
+    //定义快慢指针，快指针寻找不是0的数，分两种情况，第一种：当第一个数就是0时，快指针寻找的非零元素与慢指针元素交换。第二种：当第一个元素不是0时，快指针寻找的非零元素与慢指针的下一个元素交换位置。再定义一个count来记录0出现的次数，用于最后赋值
+        int slow = 0;
+        int count = 0;
+        if(nums[slow] != 0){//第一种情况
+            for(int fast = 1;fast<nums.length;fast++){
+                if(nums[fast]!=0){//逆向思维，当前数不是0时
+                    slow++;
+                    nums[slow] = nums[fast];
+                }else count++;
+            }
+        }else{//第二中情况
+            count =1;
+            for(int fast = 1;fast<nums.length;fast++){
+                if(nums[fast]!=0){//逆向思维，当前数不是0时
+                    nums[slow] = nums[fast];
+                    slow++;
+                }else count++;
+            }
+        }
+        //逆向赋值0
+        int len = nums.length;
+        for(int i =0;i<count;i++){
+            nums[len-1] = 0;
+            len--;
+        }
+    }
+}
 ```
