@@ -242,34 +242,135 @@ class Solution {
 如果字符串的反序与原始字符串相同，则该字符串称为回文字符串。
 
 ```java
+中心扩散法
+主要思想：回文子串的长度不确定，所以直接穷举所有奇数和偶数的子串作为中心，往两百不断扩散
 class Solution {
-    public String longestPalindrome(String s) {//中心扩展算法
-        if (s == null && s.length() < 1) return "";
-            int start = 0;
-            int maxLen =1;
-            for (int i = 0; i < s.length()-1; i++) {// i 作为中心点
-               if(i-1>=0&&i+1<s.length()&&s.charAt(i-1) == s.charAt(i+1)){
-                   int a =i-1;
-                   int b = i+1;
-                   while ((--a) >=0&& (++b)< s.length()&&s.charAt(a) == s.charAt(b)) {
-                       start = a;
-                       maxLen = b;
-                   }
-               }
+    // 主函数
+    public String longestPalindrome(String s) {
+        // 记录最长回文串
+        String res = "";
+        // 穷举以所有点（奇数一个点，偶数两个点）为中心的回文串
+        for (int i = 0; i < s.length(); i++) {
+            // 当回文串是奇数时，由一个中心点向两边扩散
+            String s1 = palindrome(s, i, i);
+            // 当回文串是偶数时，由中间的两个中心点向两边扩散
+            String s2 = palindrome(s, i, i + 1);
+            // 三元运算符：判断为真时取冒号前面的值，为假时取冒号后面的值
+            res = res.length() > s1.length() ? res : s1;
+            res = res.length() > s2.length() ? res : s2;
+        }
+        return res;
+    }
+    // 辅助函数：寻找回文串
+    private String palindrome(String s, int left, int right) {
+        // 在区间 [0, s.length() - 1] 中寻找回文串，防止下标越界
+        while (left >=0 && right < s.length()) {
+            // 是回文串时，继续向两边扩散
+            if (s.charAt(left) == s.charAt(right)) {
+                left--;
+                right++;
+            } else {
+                break;
             }
-        return s.substring(start,maxLen+1);
+        }
+        // 循环结束时的条件是 s.charAt(left) != s.charAt(right), 所以正确的区间为 [left + 1, right), 方法 substring(start, end) 区间是 [start, end), 不包含 end
+        return s.substring(left + 1, right);
     }
 }
 ```
 
+---
 
-**题目**：
+## 翻转字符串里的单词
 
-主串A：a、b、c、d
+给你一个字符串 s ，请你反转字符串中 单词 的顺序。
 
-子串B：b、c
+单词 是由非空格字符组成的字符串。s 中使用至少一个空格将字符串中的 单词 分隔开。
 
-判断B是否存在于A中，存在返回A下标，不存在放回-1
+返回 单词 顺序颠倒且 单词 之间用单个空格连接的结果字符串。
+
+注意：输入字符串 s中可能会存在前导空格、尾随空格或者单词间的多个空格。返回的结果字符串中，单词间应当仅用单个空格分隔，且不包含任何额外的空格。
+
+```java
+解题思路：先遍历字符串将首尾的空格全部去除。再利用双端队列再头部插入单词拉来实现倒序
+class Test1 {  
+    public static void main(String[] args) {  
+        new Test1().reverseWords("  Hello my friends ");  
+    }  
+    public  String reverseWords(String str){  
+        //空格去除  
+        int start = 0;  
+        int end = str.length()-1;  
+        while (start < end && str.charAt(start) == ' ') start++;//去首空格  
+        while (start < end && str.charAt(end) == ' ') end--;//去尾空格  
+        str = str.substring(start,end+1);  //截取去掉首位空格的字符串
+        start =0;  
+        end = str.length()-1;  
+        //将单词压入队列头部  
+        Deque<String> d = new ArrayDeque<String>();  //双端队列
+        StringBuilder word = new StringBuilder();  
+        while (start <= end) {  
+            char c = str.charAt(start);  
+            if ((word.length() != 0) && (c == ' ')) {//当前有单词且遇到字符空格，可以将单词压入队列  
+                // 每次都将单词 push 到队列的头部，相当于倒叙添加  
+                d.offerFirst(word.toString());  
+                word.setLength(0);//字符串长度归零，相当于删除已有字符串  
+            } else if (c != ' ') {//当前字符不为空格  
+                word.append(c);//添加  
+            }  
+            ++start;  
+        }  
+        d.offerFirst(word.toString());//压入最后一个单词  
+        return String.join(" ",d);  
+    }  
+}
+```
+
+---
+
+## 实现 strStr()（KMP算法）
+
+给你两个字符串 haystack 和 needle ，请你在 haystack 字符串中找出 needle 字符串的第一个匹配项的下标（下标从 0 开始）。如果 needle 不是 haystack 的一部分，则返回  -1 。
+
+假设与第一个字符不匹配：
+
+![image-20230211165654050](D:\app\Typora\md\images\image-20230211165654050.png)
+
+```java
+KMP算法
+上图中主串：AAAAAAGC  子串(模式串)：AAAAGC
+部分解释：前缀包含第一个字符但不包含最后一个字符。后缀包含第最后一个个字符但不包含第一个一个字符
+class Solution {
+    public int strStr(String haystack, String needle) {
+        if(needle.length()==0) return 0;
+        int m = haystack.length(), i = 0;
+        int n = needle.length(),   j = 0;
+        int[] next = nextBuilder(needle);//根据模式串构造next数组
+        while(i<m && j<n) {
+            if(j<0 || haystack.charAt(i) == needle.charAt(j)) {
+                i++;j++;
+            }else{j = next[j];}
+        }
+        if(j == n) { return i - j;}
+        else return -1;
+    }
+    private int[] nextBuilder(String needle) {next数组的构造
+        int m = needle.length();//数组长度
+        int[] next = new int[m];
+        next[0] = -1;//next数组第一个为-1
+        int t = -1, j = 0;
+        while(j < m-1) {//数组遍历
+            if(t < 0 || needle.charAt(t) == needle.charAt(j)) {
+                t++;
+                j++;
+                next[j] = t;
+            } else { t = next[t];}
+        }
+        return next;
+    }
+}
+```
+
 
 ---
 
@@ -291,11 +392,6 @@ public class Test10 {
 }
 ```
 
-## KMP算法
-
-假设与第一个字符不匹配：
-
-![image-20230211165654050](D:\app\Typora\md\images\image-20230211165654050.png)
 
 <hr>
 
@@ -863,3 +959,4 @@ public void moveZeroes(int[] nums) {
     }
 }
 ```
+
