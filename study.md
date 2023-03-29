@@ -960,3 +960,185 @@ public void moveZeroes(int[] nums) {
 }
 ```
 
+## 数组练习
+
+[[力扣练习]]
+
+---
+
+## 队列
+
+### 循环队列
+
+```java
+//循环队列，双指针？使用双指针和动态数组，实现循环队列。
+创建一个长度为 k 的数组充当循环队列，使用两个变量 front 和 rear 来充当队列头和队列尾（起始均为 0），整个过程 front 始终指向队列头部，rear 始终指向队列尾部的下一位置（待插入元素位置）
+
+class MyCircularQueue {
+    private int front = 0;  // 队首指针
+    private int rear = 0;   // 队尾指针
+    private List<Integer> arrList;//数组
+    private int maxSize;//记录长度
+    public MyCircularQueue(int k) {//初始化队列全部元素为空null
+        maxSize = k;
+        arrList = new ArrayList<>(k);
+        for (int i = 0; i < k; i++) {
+            arrList.add(null);
+        }
+    }
+    public boolean enQueue(int value) {//添加元素到队列尾部
+        if (isFull()) {//队列是否已满
+            return false;
+        }
+       arrList.set(rear, value);//记住始终在尾部指针的地方添加元素（第一个元素在0位置添加，以此类推）
+        rear = (rear + 1) % maxSize;//当尾部指针等于长度时，会变为0(实现循环队列的关键)
+        return true;
+    }
+    public boolean deQueue() {//队列首部元素出栈
+        if (isEmpty()) {
+            return false;
+        }
+        arrList.set(front, null);//添加使用set方法，方便特殊的位置添加
+        front = (front + 1) % maxSize;//当首部指针等于长度时，会变为0(实现循环队列的关键)
+        return true;
+    }
+    public int Front() {//得到首部元素
+        if (isEmpty()) {
+            return -1;
+        }
+        return arrList.get(front);
+    }
+    public int Rear() {//得到尾部元素
+        if (isEmpty()) {
+            return -1;
+        }
+        return arrList.get((rear - 1 + maxSize) % maxSize);
+    }
+    public boolean isEmpty() {//判断是否整个队列是否为空
+        return front == rear && arrList.get(front) == null;//首部指针为空时，且首部指针等于尾部指针，队列全部为空
+    }
+    public boolean isFull() {//判断是否已满
+        return front == rear && arrList.get(front) != null;//尾部指针等于长度-1时，会变为0，且首部指针等于尾部指针，表示队列已满
+    }
+}
+```
+
+
+### 循环队列的公式的推导
+
+**首先是 (rear - 1+maxSize)%maxSize公式：**
+
+当我们的索引超出队列,使用百分号让他回来
+使用%可以让那些超过的数字回到队列里面来
+
+比如当我们的rear已经指向了队列.length-1（最后一位）,这已经没有下一位,于是我们要想办法让他回到我们的队列开头
+我们可以看到当我们队列长度为5的时候,不管我们的数值有多大，最终都无法超过5，请看下方GIF
+![[%号的作用.gif]]
+rear和front在循环队列中的计算
+当我们的rear在front的前面(队列已经超过了长度开始循环了)
+
+使用  (rear - 1+maxSize)%maxSize 得到尾部指针位置前面一个元素（尾部指针表示下一个要插入的位置，前面一个才是尾部元素）。rear-1表示尾部元素的位置，(尾部元素位置+长度)%长度 = 尾部元素位置
+
+![[循环队列1.png]]
+
+**front = (front + 1) % maxSize公式**:
+
+相当于font++，只不过为了循环将条件添加了一个%，使其实现循环指针
+
+---
+
+### 队列的广度优先搜索
+
+实现代码  - [[2023-03-28]]
+
+实现语言：Java
+实现前提条件：了解Java的队列的实现与应用
+
+注明：模板来源：[力扣（广度优先搜索模板）](https://leetcode.cn/leetbook/read/queue-stack/kc5ge/)
+
+==要求==：输入根节点和目标节点，找到根节点到目标节点的最短距离。
+思路：
+- 先将根节点加入队列，进行判断当前节点是否为目标节点。
+- 当前节点非目标节点，循环加入邻居节点（孩子节点）并移除根当前节点，更新步骤（长度）。直到找到目标节点位置。
+
+![在这里插入图片描述](https://img-blog.csdnimg.cn/49131542e4e0489e839c3c87576dea5b.png)
+
+
+队列添加==模拟==：
+添加根节点到队列，进入while循环
+step =1 
+进入第一次for循环
+[A]  
+判断A是否为目标节点->否，移除A节点，添加子节点到队列
+step =2 
+进入第二次for循环
+[B C D] 
+判断B是否为目标节点->否，移除B节点，添加B的子节点到队列
+[C D E] 
+判断C是否为目标节点->否，移除C节点，添加C的子节点到队列
+[D E F]
+判断D是否为目标节点->否，移除D节点，添加D的子节点到队列
+step = 3
+进入第三次for循环
+[E F G]
+判断E是否为目标节点->否，移除E节点，E无子节点
+[F,G]
+判断F是否为目标节点->否，移除F节点，F子节点G不添加到队列(G节点已经添加过)
+[G]
+判断G是否为目标节点->是，返回step
+
+以下是实现并添加的测试代码：
+```java
+public static void main(String[] args) {  
+        Node G = new Node(null);  
+        Node E = new Node(null);  
+        Node B = new Node(new Node[]{E});  
+        Node D = new Node(new Node[]{G});  
+        Node F = new Node(new Node[]{G});  
+        Node C = new Node(new Node[]{F});  
+        Node root = new Node(new Node[]{B,C,D});//根节点  
+        int a = Test1.BFS(root,F);  
+        System.out.print(a);  
+    }  
+ static class Node{  //自定义节点
+        Node[] neighbors;//邻居（相当于二叉树的孩子节点）数组  
+        public Node(Node[] nodes){  
+            neighbors = nodes;  
+        }  
+}  
+    /**  
+     * Return the length of the shortest path between root and target node.     * 返回与根节点与目标节点最近的距离  
+     */  
+    static int BFS(Node root, Node target) {//根节点，目标节点  
+        Queue<Node> queue;  // store all nodes which are waiting to be processed 存储所有节点  
+        int step = 0;       // number of steps neeeded from root to current node//记录距离  
+        // initialize  
+        queue = new LinkedList<>();  
+        //add root to queue  
+        queue.offer(root);  
+        while (!queue.isEmpty()) { // BFS  
+            step = step + 1;  
+            // iterate the nodes which are already in the queue  
+            int size = queue.size();  
+            for (int i = 0; i < size; ++i) {  
+                Node cur = queue.element();//获取队列首个元素  
+                if (cur == target) return step; //代码关键，当前节点就是目标节点时即可返回长度  
+//                for (Node next : queue) {//add the neighbors of cur 循环添加邻居节点  
+//                    queue.offer(next);  
+//                }  
+               if (cur.neighbors!=null){//当前节点是否有邻节点
+                    for (int j = 0; j<cur.neighbors.length;j++) {//add the neighbors of cur 循环添加邻居节点
+                        if(!set.contains(cur.neighbors[j])) {//判断节点是否已经添加过
+                            queue.offer(cur.neighbors[j]);
+                            set.add(cur.neighbors[j]);//set集合
+                        }
+                     }
+                } 
+                queue.remove();//remove the first node from queue;  
+            }  
+        }  
+        return -1;          // there is no path from root to target  
+    }  
+```
+
+
